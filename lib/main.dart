@@ -1,4 +1,4 @@
-import 'package:crypto_app/screens/main_shell.dart';
+import 'package:crypto_app/screens/splash_screen.dart';
 import 'package:crypto_app/constants/app_theme.dart';
 import 'package:crypto_app/constants/theme_controller.dart';
 import 'package:flutter/material.dart';
@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: controller.mode,
-          home: const MainShell(),
+          home: const AppLaunchGate(),
         ),
       ),
       ),
