@@ -201,7 +201,9 @@ class _StatsGrid extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(e.key,
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12)),
               const SizedBox(height: 4),
               Text(e.value, style: const TextStyle(fontWeight: FontWeight.w600)),
             ],

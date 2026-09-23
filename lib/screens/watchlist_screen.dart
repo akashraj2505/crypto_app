@@ -16,14 +16,15 @@ class WatchlistScreen extends StatelessWidget {
       body: BlocBuilder<WatchlistBloc, WatchlistState>(
         builder: (context, watchlistState) {
           if (watchlistState.symbols.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.star_border_rounded,
-                      size: 48, color: AppColors.textMuted),
-                  SizedBox(height: 12),
-                  Text('No coins in your watchlist yet'),
+                      size: 48,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  const SizedBox(height: 12),
+                  const Text('No coins in your watchlist yet'),
                 ],
               ),
             );

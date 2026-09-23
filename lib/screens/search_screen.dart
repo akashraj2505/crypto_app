@@ -96,7 +96,9 @@ class _SearchResultTile extends StatelessWidget {
       ),
       title: Text(coin.baseAsset),
       subtitle: Text(coin.symbol,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12)),
       trailing: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: MainAxisAlignment.center,

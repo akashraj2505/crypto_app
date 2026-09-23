@@ -128,7 +128,8 @@ class _OverviewCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Total 24h Quote Volume',
-                  style: TextStyle(color: AppColors.textSecondary)),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
               Text(_formatLarge(totalQuoteVolume),
                   style: const TextStyle(fontWeight: FontWeight.w600)),
             ],
@@ -180,7 +181,7 @@ class _HorizontalCoinStrip extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: coins.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           final coin = coins[index];
           return GestureDetector(
@@ -249,7 +250,9 @@ class _VolumeRow extends StatelessWidget {
       ),
       title: Text(coin.baseAsset),
       subtitle: Text(coin.symbol,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 12)),
       trailing: Text(
         _OverviewCard._formatLarge(coin.quoteVolume24h),
         style: const TextStyle(fontWeight: FontWeight.w600),

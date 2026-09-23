@@ -22,6 +22,106 @@ class AppColors {
 }
 
 class AppTheme {
+  static ThemeData get light {
+    const background = Color(0xFFF7F9FC);
+    const surface = Color(0xFFFFFFFF);
+    const surfaceElevated = Color(0xFFEEF3F8);
+    const border = Color(0xFFDCE3EC);
+    const primaryText = Color(0xFF17212B);
+    const secondaryText = Color(0xFF5E6B7A);
+    const mutedText = Color(0xFF8793A1);
+    final base = ThemeData(
+      brightness: Brightness.light,
+      useMaterial3: true,
+      scaffoldBackgroundColor: background,
+      colorScheme: const ColorScheme.light(
+        surface: surface,
+        surfaceContainerHighest: surfaceElevated,
+        primary: AppColors.accent,
+        secondary: AppColors.accent,
+        error: AppColors.loss,
+        onSurface: primaryText,
+        onSurfaceVariant: secondaryText,
+      ),
+    );
+    return base.copyWith(
+      textTheme: GoogleFonts.interTextTheme(base.textTheme).apply(
+        bodyColor: primaryText,
+        displayColor: primaryText,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: background,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: primaryText,
+        ),
+        iconTheme: const IconThemeData(color: primaryText),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: AppColors.accent.withValues(alpha: 0.14),
+        height: 64,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) =>
+            GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: states.contains(WidgetState.selected)
+                  ? FontWeight.w600
+                  : FontWeight.w400,
+              color: states.contains(WidgetState.selected)
+                  ? AppColors.accent
+                  : mutedText,
+            )),
+        iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(
+              color: states.contains(WidgetState.selected)
+                  ? AppColors.accent
+                  : mutedText,
+            )),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surfaceElevated,
+        hintStyle: GoogleFonts.inter(color: mutedText, fontSize: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: secondaryText,
+        textColor: primaryText,
+      ),
+      dividerTheme: const DividerThemeData(color: border, thickness: 1, space: 24),
+      cardTheme: CardThemeData(
+        color: surface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.accent,
+          foregroundColor: Colors.white,
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+      chipTheme: base.chipTheme.copyWith(
+        backgroundColor: surfaceElevated,
+        selectedColor: AppColors.accent.withValues(alpha: 0.16),
+        labelStyle: GoogleFonts.inter(color: primaryText, fontSize: 13),
+        side: BorderSide.none,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
   static ThemeData get dark {
     final base = ThemeData(
       brightness: Brightness.dark,

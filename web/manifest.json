@@ -1,11 +1,11 @@
 {
-    "name": "crypto_app",
-    "short_name": "crypto_app",
+    "name": "Coinora",
+    "short_name": "Coinora",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0D1117",
+    "theme_color": "#0D1117",
+    "description": "Clear crypto market intelligence.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

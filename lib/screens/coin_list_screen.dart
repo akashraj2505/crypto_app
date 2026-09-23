@@ -168,7 +168,9 @@ class _CoinTile extends StatelessWidget {
                 SizedBox(
                   width: 20,
                   child: Text('$rank',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12)),
                 ),
                 const SizedBox(width: 6),
                 CircleAvatar(
@@ -183,7 +185,9 @@ class _CoinTile extends StatelessWidget {
           title: Text(coin.baseAsset,
               style: const TextStyle(fontWeight: FontWeight.w600)),
           subtitle: Text(coin.symbol,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12)),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -208,7 +212,9 @@ class _CoinTile extends StatelessWidget {
                   child: Icon(
                     isWatched ? Icons.star_rounded : Icons.star_border_rounded,
                     size: 18,
-                    color: isWatched ? AppColors.watchlistStar : AppColors.textMuted,
+                    color: isWatched
+                        ? AppColors.watchlistStar
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -226,12 +232,12 @@ class _CoinListShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: AppColors.surfaceElevated,
-      highlightColor: AppColors.border,
+      baseColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      highlightColor: Theme.of(context).dividerColor,
       child: ListView.builder(
         itemExtent: 72,
         itemCount: 8,
-        itemBuilder: (_, __) => const ListTile(
+        itemBuilder: (_, _) => const ListTile(
           leading: CircleAvatar(backgroundColor: Colors.white),
           title: SizedBox(height: 12, child: ColoredBox(color: Colors.white)),
           subtitle:
@@ -252,7 +258,8 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textMuted),
+          Icon(Icons.wifi_off_rounded,
+              size: 48, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(height: 12),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 12),
@@ -272,13 +279,14 @@ class _EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.search_off_rounded, size: 48, color: AppColors.textMuted),
-          SizedBox(height: 12),
-          Text('No coins match your search'),
+          Icon(Icons.search_off_rounded,
+              size: 48, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          const SizedBox(height: 12),
+          const Text('No coins match your search'),
         ],
       ),
     );
