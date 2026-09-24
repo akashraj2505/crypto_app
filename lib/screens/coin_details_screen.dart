@@ -1,11 +1,13 @@
 import 'package:crypto_app/constants/app_theme.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocs/watchlist/watchlist_bloc.dart';
 import '../models/coin.dart';
 import '../services/binance_api_service.dart';
+import '../widgets/coin_widgets.dart';
 
 class CoinDetailsScreen extends StatefulWidget {
   const CoinDetailsScreen({super.key, required this.coin});
@@ -29,73 +31,132 @@ class _CoinDetailsScreenState extends State<CoinDetailsScreen> {
   void _changeInterval(String interval) {
     setState(() {
       _interval = interval;
-      _candlesFuture =
-          _api.fetchKlines(widget.coin.symbol, interval: interval);
+      _candlesFuture = _api.fetchKlines(widget.coin.symbol, interval: interval);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final coin = widget.coin;
-    final isUp = coin.priceChangePercent24h >= 0;
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${coin.baseAsset} / ${coin.symbol.substring(coin.baseAsset.length)}'),
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            CoinAvatar(symbol: coin.baseAsset, size: 32),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(coin.baseAsset,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 17)),
+                Text(
+                  coin.quoteSymbol.isEmpty
+                      ? coin.symbol
+                      : '${coin.baseAsset} / ${coin.quoteSymbol}',
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ],
+        ),
         actions: [
-          BlocBuilder<WatchlistBloc, WatchlistState>(
-            buildWhen: (prev, curr) =>
-                prev.contains(coin.symbol) != curr.contains(coin.symbol),
-            builder: (context, state) {
-              final isWatched = state.contains(coin.symbol);
-              return IconButton(
-                icon: Icon(isWatched ? Icons.star_rounded : Icons.star_border_rounded),
-                color: isWatched ? AppColors.watchlistStar : null,
-                onPressed: () => context
-                    .read<WatchlistBloc>()
-                    .add(WatchlistToggled(coin.symbol)),
-              );
-            },
-          ),
+          WatchStar(symbol: coin.symbol, size: 26),
+          const SizedBox(width: 8),
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          Text('\$${coin.lastPrice.toStringAsFixed(4)}',
-              style: Theme.of(context).textTheme.headlineMedium),
-          Text(
-            '${isUp ? '+' : ''}${coin.priceChangePercent24h.toStringAsFixed(2)}% (24h)',
-            style: TextStyle(
-                color: isUp ? AppColors.gain : AppColors.loss,
-                fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 20),
-          _IntervalSelector(selected: _interval, onChanged: _changeInterval),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 240,
-            child: FutureBuilder<List<Candle>>(
-              future: _candlesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return const Center(child: Text('Chart unavailable'));
-                }
-                final candles = snapshot.data ?? [];
-                if (candles.isEmpty) {
-                  return const Center(child: Text('No chart data'));
-                }
-                return _PriceLineChart(candles: candles, isUp: isUp);
-              },
+          _PriceHeader(coin: coin),
+          const SizedBox(height: 16),
+          AppCard(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                _IntervalSelector(
+                    selected: _interval, onChanged: _changeInterval),
+                const SizedBox(height: 14),
+                SizedBox(
+                  height: 270,
+                  child: FutureBuilder<List<Candle>>(
+                    future: _candlesFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2.5));
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('Chart unavailable'),
+                              TextButton(
+                                onPressed: () => _changeInterval(_interval),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      final candles = snapshot.data ?? const <Candle>[];
+                      if (candles.length < 2) {
+                        return const Center(child: Text('No chart data'));
+                      }
+                      return _ChartView(
+                          candles: candles, prefix: coin.pricePrefix);
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          _RangeCard(coin: coin),
+          const SizedBox(height: 8),
+          const SectionTitle('Market Stats'),
           _StatsGrid(coin: coin),
+          const SizedBox(height: 24),
+          _WatchButton(coin: coin),
         ],
       ),
+    );
+  }
+}
+
+class _PriceHeader extends StatelessWidget {
+  const _PriceHeader({required this.coin});
+  final Coin coin;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            coin.priceLabel,
+            style: const TextStyle(
+                fontSize: 34, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            ChangePill(percent: coin.priceChangePercent24h),
+            const SizedBox(width: 8),
+            Text('Past 24 hours',
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -105,66 +166,273 @@ class _IntervalSelector extends StatelessWidget {
   final String selected;
   final ValueChanged<String> onChanged;
 
-  static const _intervals = ['15m', '1h', '4h', '1d', '1w'];
+  static const _intervals = {
+    '15m': '15m',
+    '1h': '1H',
+    '4h': '4H',
+    '1d': '1D',
+    '1w': '1W',
+  };
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      children: _intervals.map((interval) {
-        return ChoiceChip(
-          label: Text(interval),
-          selected: selected == interval,
-          onSelected: (_) => onChanged(interval),
-        );
-      }).toList(),
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: cs.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          for (final e in _intervals.entries)
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  if (e.key == selected) return;
+                  HapticFeedback.selectionClick();
+                  onChanged(e.key);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected == e.key
+                        ? cs.primary.withValues(alpha: 0.2)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Text(
+                    e.value,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: selected == e.key ? cs.primary : cs.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChartView extends StatelessWidget {
+  const _ChartView({required this.candles, required this.prefix});
+  final List<Candle> candles;
+  final String prefix;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final first = candles.first.close;
+    final last = candles.last.close;
+    final change = first == 0 ? 0.0 : (last - first) / first * 100;
+    var high = candles.first.close, low = candles.first.close;
+    for (final c in candles) {
+      if (c.close > high) high = c.close;
+      if (c.close < low) low = c.close;
+    }
+    final color = change >= 0 ? AppColors.gain : AppColors.loss;
+    final muted = TextStyle(color: cs.onSurfaceVariant, fontSize: 12);
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            ChangePill(percent: change, compact: true),
+            const SizedBox(width: 8),
+            Text('this period', style: muted),
+            const Spacer(),
+            Text('H $prefix${formatPrice(high)}', style: muted),
+            const SizedBox(width: 10),
+            Text('L $prefix${formatPrice(low)}', style: muted),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: _PriceLineChart(candles: candles, color: color, prefix: prefix),
+        ),
+      ],
     );
   }
 }
 
 class _PriceLineChart extends StatelessWidget {
-  const _PriceLineChart({required this.candles, required this.isUp});
+  const _PriceLineChart({
+    required this.candles,
+    required this.color,
+    required this.prefix,
+  });
   final List<Candle> candles;
-  final bool isUp;
+  final Color color;
+  final String prefix;
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final spots = <FlSpot>[
       for (var i = 0; i < candles.length; i++)
         FlSpot(i.toDouble(), candles[i].close),
     ];
-    final color = isUp ? AppColors.gain : AppColors.loss;
+    var minY = spots.first.y, maxY = spots.first.y;
+    for (final s in spots) {
+      if (s.y < minY) minY = s.y;
+      if (s.y > maxY) maxY = s.y;
+    }
+    final range = maxY - minY;
+    final pad = range == 0 ? (maxY.abs() * 0.01 + 1e-9) : range * 0.12;
+    final lo = minY - pad;
+    final hi = maxY + pad;
 
     return LineChart(
       LineChartData(
-        gridData: const FlGridData(show: false),
+        minX: 0,
+        maxX: (spots.length - 1).toDouble(),
+        minY: lo,
+        maxY: hi,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: (hi - lo) / 4,
+          getDrawingHorizontalLine: (_) => FlLine(
+            color: cs.outlineVariant.withValues(alpha: 0.35),
+            strokeWidth: 0.8,
+            dashArray: [4, 4],
+          ),
+        ),
         titlesData: const FlTitlesData(show: false),
         borderData: FlBorderData(show: false),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipItems: (spots) => spots
+            getTooltipItems: (touched) => touched
                 .map((s) => LineTooltipItem(
-                    '\$${s.y.toStringAsFixed(2)}',
-                    const TextStyle(color: Colors.white)))
+                      '$prefix${formatPrice(s.y)}',
+                      const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.w600),
+                    ))
                 .toList(),
           ),
+          getTouchedSpotIndicator: (barData, indexes) => indexes
+              .map((_) => TouchedSpotIndicatorData(
+                    FlLine(
+                      color: color.withValues(alpha: 0.6),
+                      strokeWidth: 1.5,
+                      dashArray: [4, 4],
+                    ),
+                    FlDotData(
+                      getDotPainter: (spot, percent, bar, index) =>
+                          FlDotCirclePainter(
+                        radius: 4.5,
+                        color: color,
+                        strokeWidth: 2,
+                        strokeColor: Colors.white,
+                      ),
+                    ),
+                  ))
+              .toList(),
         ),
         lineBarsData: [
           LineChartBarData(
             spots: spots,
             isCurved: true,
+            curveSmoothness: 0.18,
+            preventCurveOverShooting: true,
             color: color,
-            barWidth: 2,
+            barWidth: 2.4,
             dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(
               show: true,
-              color: color.withValues(alpha: 0.15),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  color.withValues(alpha: 0.28),
+                  color.withValues(alpha: 0.0),
+                ],
+              ),
             ),
           ),
         ],
       ),
-      // Animate transitions when switching intervals for a smoother feel.
       duration: const Duration(milliseconds: 300),
+    );
+  }
+}
+
+class _RangeCard extends StatelessWidget {
+  const _RangeCard({required this.coin});
+  final Coin coin;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final low = coin.lowPrice24h, high = coin.highPrice24h;
+    final span = high - low;
+    final t = span <= 0
+        ? 0.5
+        : ((coin.lastPrice - low) / span).clamp(0.0, 1.0).toDouble();
+    final muted = TextStyle(color: cs.onSurfaceVariant, fontSize: 12);
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('24h Range',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+              const Spacer(),
+              Text('${coin.rangePercent24h.toStringAsFixed(2)}% swing',
+                  style: muted),
+            ],
+          ),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, c) => SizedBox(
+              height: 16,
+              child: Stack(
+                alignment: Alignment.centerLeft,
+                children: [
+                  Container(
+                    height: 6,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(3),
+                      gradient: const LinearGradient(
+                          colors: [AppColors.loss, AppColors.gain]),
+                    ),
+                  ),
+                  Positioned(
+                    left: (c.maxWidth - 14) * t,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: cs.surface,
+                        border: Border.all(color: cs.onSurface, width: 3),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Low  ${coin.pricePrefix}${formatPrice(low)}', style: muted),
+              Text('High  ${coin.pricePrefix}${formatPrice(high)}',
+                  style: muted),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -175,41 +443,117 @@ class _StatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stats = <String, String>{
-      '24h High': '\$${coin.highPrice24h.toStringAsFixed(4)}',
-      '24h Low': '\$${coin.lowPrice24h.toStringAsFixed(4)}',
-      '24h Volume': coin.volume24h.toStringAsFixed(2),
-      '24h Quote Vol': coin.quoteVolume24h.toStringAsFixed(2),
-    };
+    final p = coin.pricePrefix;
+    final stats = <(String, String, IconData)>[
+      ('24h High', '$p${formatPrice(coin.highPrice24h)}', Icons.north_east_rounded),
+      ('24h Low', '$p${formatPrice(coin.lowPrice24h)}', Icons.south_east_rounded),
+      (
+        '24h Volume (${coin.baseAsset})',
+        formatCompact(coin.volume24h, prefix: ''),
+        Icons.bar_chart_rounded
+      ),
+      (
+        '24h Volume (${coin.quoteSymbol.isEmpty ? 'quote' : coin.quoteSymbol})',
+        formatCompact(coin.quoteVolume24h, prefix: p),
+        Icons.payments_rounded
+      ),
+    ];
 
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 2.4,
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      children: stats.entries.map((e) {
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
+    return LayoutBuilder(
+      builder: (context, c) {
+        final w = (c.maxWidth - 10) / 2;
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (final s in stats)
+              SizedBox(
+                width: w,
+                child: _StatTile(label: s.$1, value: s.$2, icon: s.$3),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({required this.label, required this.value, required this.icon});
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Text(e.key,
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontSize: 12)),
-              const SizedBox(height: 4),
-              Text(e.value, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Icon(icon, size: 14, color: cs.primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12)),
+              ),
             ],
           ),
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WatchButton extends StatelessWidget {
+  const _WatchButton({required this.coin});
+  final Coin coin;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<WatchlistBloc, WatchlistState>(
+      buildWhen: (prev, curr) =>
+          prev.contains(coin.symbol) != curr.contains(coin.symbol),
+      builder: (context, state) {
+        final watched = state.contains(coin.symbol);
+        void toggle() {
+          HapticFeedback.lightImpact();
+          context.read<WatchlistBloc>().add(WatchlistToggled(coin.symbol));
+        }
+
+        return SafeArea(
+          top: false,
+          child: SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: watched
+                ? OutlinedButton.icon(
+                    onPressed: toggle,
+                    icon: const Icon(Icons.star_rounded,
+                        color: AppColors.watchlistStar),
+                    label: const Text('Remove from watchlist'),
+                  )
+                : FilledButton.icon(
+                    onPressed: toggle,
+                    icon: const Icon(Icons.star_border_rounded),
+                    label: const Text('Add to watchlist'),
+                  ),
+          ),
         );
-      }).toList(),
+      },
     );
   }
 }

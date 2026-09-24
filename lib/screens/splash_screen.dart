@@ -78,91 +78,129 @@ class _SplashScreenState extends State<SplashScreen>
     final logoSurface = isDark ? AppColors.surfaceElevated : Colors.white;
 
     return Scaffold(
-      body: Center(
-        child: FadeTransition(
-          opacity: CurvedAnimation(
-            parent: _entranceController,
-            curve: Curves.easeOut,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: const Alignment(0, -0.25),
+            radius: 0.9,
+            colors: [
+              colors.primary.withValues(alpha: isDark ? 0.14 : 0.08),
+              Colors.transparent,
+            ],
           ),
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.88, end: 1).animate(
-              CurvedAnimation(
-                parent: _entranceController,
-                curve: Curves.easeOutBack,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 112,
-                  height: 112,
-                  decoration: BoxDecoration(
-                    color: logoSurface,
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(
-                      color: colors.primary.withValues(alpha: 0.28),
+        ),
+        child: Stack(
+          children: [
+            Center(
+              child: FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: _entranceController,
+                  curve: Curves.easeOut,
+                ),
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.88, end: 1).animate(
+                    CurvedAnimation(
+                      parent: _entranceController,
+                      curve: Curves.easeOutBack,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.primary.withValues(alpha: 0.16),
-                        blurRadius: 28,
-                        spreadRadius: 3,
-                      ),
-                    ],
                   ),
-                  child: Stack(
-                    alignment: Alignment.center,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.show_chart_rounded,
-                        size: 66,
-                        color: colors.primary,
+                      Container(
+                        width: 112,
+                        height: 112,
+                        decoration: BoxDecoration(
+                          color: logoSurface,
+                          borderRadius: BorderRadius.circular(32),
+                          border: Border.all(
+                            color: colors.primary.withValues(alpha: 0.28),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colors.primary.withValues(alpha: 0.16),
+                              blurRadius: 28,
+                              spreadRadius: 3,
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Icon(
+                              Icons.show_chart_rounded,
+                              size: 66,
+                              color: colors.primary,
+                            ),
+                            const Positioned(
+                              right: 20,
+                              top: 23,
+                              child: Icon(
+                                Icons.arrow_upward_rounded,
+                                size: 25,
+                                color: AppColors.gain,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      Positioned(
-                        right: 20,
-                        top: 23,
-                        child: Icon(
-                          Icons.arrow_upward_rounded,
-                          size: 25,
-                          color: AppColors.gain,
+                      const SizedBox(height: 24),
+                      Text(
+                        'COINORA',
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 3.2,
+                                ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Clear crypto intelligence',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(height: 34),
+                      AnimatedBuilder(
+                        animation: _pulseController,
+                        builder: (context, _) => Container(
+                          width: 34 + (_pulseController.value * 38),
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(
+                              alpha: 0.45 + (_pulseController.value * 0.55),
+                            ),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'COINORA',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 3.2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Clear crypto intelligence',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 34),
-                AnimatedBuilder(
-                  animation: _pulseController,
-                  builder: (context, _) => Container(
-                    width: 34 + (_pulseController.value * 38),
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(
-                        alpha: 0.45 + (_pulseController.value * 0.55),
-                      ),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 32,
+              child: FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: _entranceController,
+                  curve: const Interval(0.5, 1, curve: Curves.easeOut),
+                ),
+                child: Text(
+                  'Live market data · Binance',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        letterSpacing: 0.6,
+                      ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
