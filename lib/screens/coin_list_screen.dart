@@ -466,10 +466,11 @@ class _CoinListScreenState extends State<CoinListScreen> {
       case CoinListStatus.success:
         return [
           BlocBuilder<WatchlistBloc, WatchlistState>(
-            // Only the "Watchlist" quick-filter depends on watchlist changes.
-            buildWhen: (p, c) =>
-                _filter == MarketFilter.watchlist &&
-                p.symbols.length != c.symbols.length,
+            // Keep the latest symbols even while another quick-filter is
+            // selected. Otherwise, starring a coin and then switching to the
+            // Watchlist filter can render the previously cached symbols.
+            buildWhen: (previous, current) =>
+                previous.symbols != current.symbols,
             builder: (context, watch) {
               final coins = _filtered(state, watch.symbols);
               if (coins.isEmpty) return _emptySliver(context);
